@@ -2,26 +2,27 @@
 #include <stdio.h>
 #include "master.h"
 #include "slave.h"
+#include "constants.h"
 
-enum Operation {REG, GREEN, OFF, PING, ACK, STATUS};
 
-char systemStatus = 0; //initializes of
-char green = 4; //initialize it in 4, when button is pressed, goes to 0
+
+
+char systemStatus = SystemOFF; //The system initializes off
 char localAddress; //from 0 to 3, depends which master I am
 
 char slaves = 1, isPressingOnButton = 0; //number of slaves
 
-int timeInterval = 0;
+
 
 
 void setup() {
   Serial.begin(9600); //For debug
   pinMode(A0,INPUT); //For address
   pinMode(A1,INPUT); //For address
-  pinMode(13, INPUT); //On/off button
-  pinMode(A2, INPUT); //Potentiometer
+  pinMode(ON_OFF_BUTTON_PIN, INPUT); //On/off button
+  pinMode(PotentiometerPin, INPUT); //Potentiometer
   
-  delay(10); //TODO check
+  delay(TIME_DELAY_TO_CHECK_ADDRESS); //TODO check
   getAddress();
   if(localAddress == 0) {
     Wire.begin();

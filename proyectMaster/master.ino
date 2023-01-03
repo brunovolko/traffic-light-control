@@ -1,7 +1,10 @@
 #include "master.h"
+#include "constants.h"
+
+int timeIntervalToBlink = 0;
 
 void checkOnButton(){
-  char onButtonState = digitalRead(13);
+  char onButtonState = digitalRead(ON_OFF_BUTTON_PIN);
   if(onButtonState == HIGH && !isPressingOnButton) {
     isPressingOnButton = 1;
   } else if(onButtonState == LOW && isPressingOnButton) {
@@ -11,8 +14,8 @@ void checkOnButton(){
 }
 
 void handlePotentiometer(){
-  int potentiometerStatus = analogRead(A2);
-  timeInterval = 2000 + potentiometerStatus / 1024 * 13000;
+  int potentiometerStatus = analogRead(PotentiometerPin);
+  timeIntervalToBlink = 2000 + potentiometerStatus / 1024 * 13000;
 }
 
 
