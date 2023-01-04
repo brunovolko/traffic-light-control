@@ -7,10 +7,13 @@
 #define SystemOFF 0
 #define BLINKING_OFF 0
 #define BLINKING_ON 1
-#define TIME_DELAY_TO_CHECK_ADDRESS 10
+#define PRESSING_BUTTON 1
+#define NOT_PRESSING_BUTTON 0
 #define DELAY_YELLOW_BLINK 500 //500ms
 #define FOUR_BYTES 4
 #define FIVE_BYTES 5
+
+#define debounceDelay 50 // Used to debounce buttons
 
 #define ADDRESS_PIN_0 2
 #define ADDRESS_PIN_1 3

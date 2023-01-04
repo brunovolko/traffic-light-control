@@ -1,28 +1,36 @@
 #include "master.h"
 #include "constants.h"
 
-int timeIntervalToBlink = 0; //Blink? or change lights? TODO
+long timeIntervalForNextEntry = 0; //Blink? or change lights? TODO
+
+unsigned long OnButtonlastDebounceTime = 0;  // the last time the output pin was toggled
 
 void setupMaster() {
   pinMode(ADDRESS_PIN_0, INPUT); //For address
   pinMode(ADDRESS_PIN_1, INPUT); //For address
   pinMode(ON_OFF_BUTTON_PIN, INPUT); //On/off button
   pinMode(POTENTIOMETER_PIN, INPUT); //Potentiometer
+  pinMode(STATUS_LED_PIN, OUTPUT); //Status led
 }
 
 void checkOnButton(){
-  char onButtonState = digitalRead(ON_OFF_BUTTON_PIN);
+  int onButtonState = digitalRead(ON_OFF_BUTTON_PIN);  
   if(onButtonState == HIGH && !isPressingOnButton) {
-    isPressingOnButton = 1;
+    isPressingOnButton = PRESSING_BUTTON;
+    OnButtonlastDebounceTime = millis();
   } else if(onButtonState == LOW && isPressingOnButton) {
-    isPressingOnButton = 0;
-    systemStatus = !systemStatus;
+    if(millis() - OnButtonlastDebounceTime > debounceDelay) {
+      isPressingOnButton = NOT_PRESSING_BUTTON;
+      systemStatus = !systemStatus;
+      digitalWrite(STATUS_LED_PIN, (systemStatus ? HIGH : LOW)); //Change the status led
+    }
   }  
 }
 
 void handlePotentiometer(){
-  int potentiometerStatus = analogRead(POTENTIOMETER_PIN);
-  timeIntervalToBlink = 2000 + potentiometerStatus / 1024 * 13000;
+  long potentiometerStatus = analogRead(POTENTIOMETER_PIN);
+  timeIntervalForNextEntry = 2000 + potentiometerStatus * 13000 / 1024 ;
+  Serial.println(timeIntervalForNextEntry);
 }
 
 
@@ -54,24 +62,27 @@ int sendMessage(char opNumber, char destination, char * response) { //communicat
   }
 }
 
-void verifyAck(char * response, int address) {
+bool verifyAck(char * response, int address) {
   return response[0] == address && response[1] == ACK && response[2] == 0 && response[3] == (address+4);
 }
 
 void turnSlavesOff() {
   blinking = BLINKING_ON; //For traffic light 0
   turnLightsOff(); //For traffic light 0
-  char response[FOUR_BYTES];
-  
+
+  char response[FOUR_BYTES];  
   for(int i = 1; i < 4; i++) {
-    sendMessage(i, OFF_CMD, response);
-    if(!verifyAck(response, i))
-      Serial.println("ACK FAILED"); // TODO handle failure
+    if(slavesAvailable[i] == SLAVE_ACTIVE) {
+      sendMessage(i, OFF_CMD, response); //Send OFF command through WIRE
+      if(!verifyAck(response, i)) //Make sure the response was ACK
+        Serial.println("ACK FAILED"); // TODO handle failure
+    }
+    
   }
 }
 
 void detectSlaves() {
-  slavesAvailable[0] = SLAVE_ACTIVE; //This is me
+  slavesAvailable[0] = SLAVE_ACTIVE; //This is the traffic light sharing controller with the orchestrator
   char response[FIVE_BYTES]; //To store the response of each message
   int bytesRead;
   for(int i = 1; i < 4; i++) { //Iterate over the other 3 possible slaves
