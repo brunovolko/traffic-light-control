@@ -35,34 +35,35 @@ void messageReceivedHandler() {
     destination = Wire.read();
     integrity = Wire.read();
     if(integrity = (sender + opNumber + destination)) {
-      Serial.println("Integrity passed");      
+      request_received = opNumber;
+      //////////////////////////////////////////////////TODO act based on the opnumber
     } else {
       Serial.println("Integrity mismatch when receiving a message.");
     }
 
   }
-  /*while (3 <= Wire.available()) {
-    
-    
-    if (prot <= 2 && prot >= 0){
-      int x = Wire.read(); // read the next byte as an int
-      int y = Wire.read(); // read the next byte as an int
-      int number = x | y << 8;
-      switch(prot) { //depending on the protocol, the function to handle the LEDs
-        case TEMP:
-          manageTempLight(number);
-          break;
-        case LIGHT:
-          manageLightLight(number);
-          break;
-        case ROTATION:
-          //manageRotLight(number);
-          break;
-        default:
-          return;
-      }
-    }
-  }*/
+}
+
+void requestReceivedHandler() {
+  if(request_received == PING_CMD) {
+    char response [FIVE_BYTES];
+    unsigned char information = 0; //0 means no failures.
+    //We cant check if a light is failing because we send digitalWrite commands but we dont get an answer
+    information = (pedestrian_button_pressed ? 2 : 0); //2 equals to a binary 10. Therefore the 7th bit is affected.
+
+    if (!sprintf(response, "%c%c%c%c%c", localAddress, STATUS_CMD, 0, information, localAddress+STATUS_CMD+information)) { //0 is orchestrator
+      Serial.println("BROKEN SPRINTF");
+    } else {
+      Wire.write(response, FIVE_BYTES);
+    }     
+  } else if(request_received != NOTHING) {
+    char response [FOUR_BYTES];
+    if (!sprintf(response, "%c%c%c%c", localAddress, ACK, 0, ACK+localAddress)) { //0 is orchestrator
+      Serial.println("BROKEN SPRINTF");
+    } else {
+      Wire.write(response, FOUR_BYTES);
+    }     
+  }
 }
 
 void blink() {

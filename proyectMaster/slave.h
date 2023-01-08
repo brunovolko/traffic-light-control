@@ -17,10 +17,13 @@ void setupSlave();
 void turnLightsOff();
 void blink();
 void messageReceivedHandler();
+void requestReceivedHandler();
 
 char blinking = BLINKING_ON;
 char status_light_incoming = NO_LIGHTS;
 char status_light_inside = NO_LIGHTS;
 char status_light_pedestrian = NO_LIGHTS;
+bool pedestrian_button_pressed = NOT_PRESSING_BUTTON;
+int request_received = NOTHING;
 
 #endif

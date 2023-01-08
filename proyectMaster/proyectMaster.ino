@@ -35,6 +35,7 @@ void setup() {
     Serial.println(localAddress);
 
     Wire.onReceive(messageReceivedHandler);
+    Wire.onRequest(requestReceivedHandler);
   }
 }
 

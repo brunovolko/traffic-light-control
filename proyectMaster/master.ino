@@ -63,7 +63,7 @@ int sendMessage(char opNumber, char destination, char * response) { //communicat
 }
 
 bool verifyAck(char * response, int address) {
-  return response[0] == address && response[1] == ACK && response[2] == 0 && response[3] == (address+4);
+  return response[0] == address && response[1] == ACK && response[2] == 0 && response[3] == (address+ACK);
 }
 
 void turnSlavesOff() {
