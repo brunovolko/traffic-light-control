@@ -26,6 +26,22 @@ void turnLightsOff() {
   digitalWrite(PEDESTRIAN_GREEN_PIN, LOW);
 }
 
+void handleOperation(int opNumber) {
+  //RED_CMD, GREEN_CMD, OFF_CMD, PING_CMD, ACK, STATUS_CMD
+  switch(opNumber) {
+    case RED_CMD:
+      //TODO
+      break;
+    case GREEN_CMD:
+      //TODO
+      break;
+    case OFF_CMD:
+      turnLightsOff();
+      blinking = BLINKING_ON;
+      break;
+  }
+}
+
 void messageReceivedHandler() {
   int sender, opNumber, destination, integrity;
   while(4 <= Wire.available()) {
@@ -36,7 +52,7 @@ void messageReceivedHandler() {
     integrity = Wire.read();
     if(integrity = (sender + opNumber + destination)) {
       request_received = opNumber;
-      //////////////////////////////////////////////////TODO act based on the opnumber
+      handleOperation(request_received);
     } else {
       Serial.println("Integrity mismatch when receiving a message.");
     }
@@ -62,8 +78,9 @@ void requestReceivedHandler() {
       Serial.println("BROKEN SPRINTF");
     } else {
       Wire.write(response, FOUR_BYTES);
-    }     
+    }
   }
+  request_received = NOTHING;
 }
 
 void blink() {

@@ -70,15 +70,15 @@ void turnSlavesOff() {
   blinking = BLINKING_ON; //For traffic light 0
   turnLightsOff(); //For traffic light 0
 
-  char response[FOUR_BYTES];  
+  char * buffer = malloc(FOUR_BYTES);  
   for(int i = 1; i < 4; i++) {
     if(slavesAvailable[i] == SLAVE_ACTIVE) {
-      sendMessage(i, OFF_CMD, response); //Send OFF command through WIRE
-      if(!verifyAck(response, i)) //Make sure the response was ACK
+      sendMessage(i, OFF_CMD, buffer); //Send OFF command through WIRE
+      if(!verifyAck(buffer, i)) //Make sure the response was ACK
         Serial.println("ACK FAILED"); // TODO handle failure
     }
-    
   }
+  free(buffer);
 }
 
 void detectSlaves() {
