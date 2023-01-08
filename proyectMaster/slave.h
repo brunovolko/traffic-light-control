@@ -12,6 +12,7 @@
 #define INCOMING_GREEN_PIN 6
 
 #define PEDESTRIAN_GREEN_PIN 5
+#define PEDESTRIAN_BUTTON_PIN 4
 
 void setupSlave();
 void turnLightsOff();
