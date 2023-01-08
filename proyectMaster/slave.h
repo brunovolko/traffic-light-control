@@ -16,6 +16,7 @@
 void setupSlave();
 void turnLightsOff();
 void blink();
+void messageReceivedHandler();
 
 char blinking = BLINKING_ON;
 char status_light_incoming = NO_LIGHTS;

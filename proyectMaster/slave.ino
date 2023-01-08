@@ -26,6 +26,45 @@ void turnLightsOff() {
   digitalWrite(PEDESTRIAN_GREEN_PIN, LOW);
 }
 
+void messageReceivedHandler() {
+  int sender, opNumber, destination, integrity;
+  while(4 <= Wire.available()) {
+    // Each command has 4 bytes
+    sender = Wire.read();
+    opNumber = Wire.read();
+    destination = Wire.read();
+    integrity = Wire.read();
+    if(integrity = (sender + opNumber + destination)) {
+      Serial.println("Integrity passed");      
+    } else {
+      Serial.println("Integrity mismatch when receiving a message.");
+    }
+
+  }
+  /*while (3 <= Wire.available()) {
+    
+    
+    if (prot <= 2 && prot >= 0){
+      int x = Wire.read(); // read the next byte as an int
+      int y = Wire.read(); // read the next byte as an int
+      int number = x | y << 8;
+      switch(prot) { //depending on the protocol, the function to handle the LEDs
+        case TEMP:
+          manageTempLight(number);
+          break;
+        case LIGHT:
+          manageLightLight(number);
+          break;
+        case ROTATION:
+          //manageRotLight(number);
+          break;
+        default:
+          return;
+      }
+    }
+  }*/
+}
+
 void blink() {
   if (lastBlinkChange == 0) {
     lastBlinkChange = millis();

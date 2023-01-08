@@ -32,6 +32,8 @@ void setup() {
   } else {
     Serial.print("I'm slave N");
     Serial.println(localAddress);
+
+    Wire.onReceive(messageReceivedHandler);
   }
 }
 
