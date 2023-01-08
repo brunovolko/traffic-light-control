@@ -53,6 +53,7 @@ void loop() {
     checkOnButton(); //1st check for on button
     if(systemStatus == SystemON) {
       handlePotentiometer(); //Read potentiometer to adjust the time of the traffic lights
+      orchestrate();
       //TODO 3rd check pedestrian button
       //TODO orchestrate lights
       //TODO detect faults

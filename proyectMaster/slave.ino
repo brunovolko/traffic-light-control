@@ -16,6 +16,77 @@ void setupSlave() {
   pinMode(ADDRESS_PIN_1, INPUT);
 }
 
+void turnMyselfRed() {
+  if(status_light_incoming == NO_LIGHTS) {
+    turnLightsOff(); //First time
+    //Incoming traffict light
+    digitalWrite(INCOMING_RED_PIN, HIGH);
+    status_light_incoming = RED_LIGHT;
+    //Interior traffic light
+    digitalWrite(INTERIOR_GREEN_PIN, HIGH);
+    status_light_inside = GREEN_LIGHT;
+    //Pedestrian traffic light
+    digitalWrite(PEDESTRIAN_GREEN_PIN, HIGH);
+    status_light_pedestrian = GREEN_LIGHT;
+  } else {
+    //Incoming traffic light
+    digitalWrite(INCOMING_GREEN_PIN, LOW);
+    digitalWrite(INCOMING_YELLOW_PIN, HIGH);
+    delay(DELAY_YELLOW_BLINK); //Yellow for 0.5 secs
+    digitalWrite(INCOMING_YELLOW_PIN, LOW);
+    digitalWrite(INCOMING_RED_PIN, HIGH);
+    status_light_incoming = RED_LIGHT;
+
+    //Turn pedestrian light green 
+    digitalWrite(PEDESTRIAN_GREEN_PIN, HIGH);
+    status_light_pedestrian = GREEN_LIGHT;
+
+    //Turn inside traffic light also green
+    digitalWrite(PEDESTRIAN_RED_PIN, LOW);
+    digitalWrite(PEDESTRIAN_YELLOW_PIN, HIGH);
+    delay(DELAY_YELLOW_BLINK); //Yellow for 0.5 secs
+    digitalWrite(PEDESTRIAN_YELLOW_PIN, LOW);
+    digitalWrite(PEDESTRIAN_GREEN_PIN, HIGH);
+    status_light_inside = GREEN_LIGHT;
+
+  }
+}
+void turnMyselfGreen() {
+  if(status_light_incoming == NO_LIGHTS) {
+    turnLightsOff(); //First time
+    //Incoming traffict light
+    digitalWrite(INCOMING_GREEN_PIN, HIGH);
+    status_light_incoming = GREEN_LIGHT;
+    //Interior traffic light
+    digitalWrite(INTERIOR_RED_PIN, HIGH);
+    status_light_inside = RED_LIGHT;
+    //Pedestrian traffic light
+    digitalWrite(PEDESTRIAN_GREEN_PIN, LOW);
+    status_light_pedestrian = RED_LIGHT;
+  } else {
+    //Incoming traffic light
+    digitalWrite(INCOMING_RED_PIN, LOW);
+    digitalWrite(INCOMING_YELLOW_PIN, HIGH);
+    delay(DELAY_YELLOW_BLINK); //Yellow for 0.5 secs
+    digitalWrite(INCOMING_YELLOW_PIN, LOW);
+    digitalWrite(INCOMING_GREEN_PIN, HIGH);
+    status_light_incoming = GREEN_LIGHT;
+
+    //Turn pedestrian light red 
+    digitalWrite(PEDESTRIAN_GREEN_PIN, LOW);
+    status_light_pedestrian = RED_LIGHT;
+
+    //Turn inside traffic light also red
+    digitalWrite(PEDESTRIAN_GREEN_PIN, LOW);
+    digitalWrite(PEDESTRIAN_YELLOW_PIN, HIGH);
+    delay(DELAY_YELLOW_BLINK); //Yellow for 0.5 secs
+    digitalWrite(PEDESTRIAN_YELLOW_PIN, LOW);
+    digitalWrite(PEDESTRIAN_RED_PIN, HIGH);
+    status_light_inside = RED_LIGHT;
+
+  }
+}
+
 void turnLightsOff() {
   digitalWrite(INTERIOR_RED_PIN, LOW);
   digitalWrite(INTERIOR_YELLOW_PIN, LOW);
@@ -26,14 +97,23 @@ void turnLightsOff() {
   digitalWrite(PEDESTRIAN_GREEN_PIN, LOW);
 }
 
+void initiateTrafficLightIfNeeded() {
+  if(blinking) {
+    blinking = BLINKING_OFF;
+    turnLightsOff();
+  }
+}
+
 void handleOperation(int opNumber) {
-  //RED_CMD, GREEN_CMD, OFF_CMD, PING_CMD, ACK, STATUS_CMD
+  //TODO in case we receive a red or green command but we are in blinking mode, disable blinking and turn lights off
   switch(opNumber) {
     case RED_CMD:
-      //TODO
+      initiateTrafficLightIfNeeded();
+      turnMyselfRed();
       break;
     case GREEN_CMD:
-      //TODO
+    initiateTrafficLightIfNeeded();
+      turnMyselfGreen();
       break;
     case OFF_CMD:
       turnLightsOff();

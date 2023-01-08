@@ -1,7 +1,7 @@
 #include "master.h"
 #include "constants.h"
 
-long timeIntervalForNextEntry = 0; //Blink? or change lights? TODO
+unsigned int timeIntervalForNextEntry = 0; //Blink? or change lights? TODO
 
 unsigned long OnButtonlastDebounceTime = 0;  // the last time the output pin was toggled
 
@@ -23,12 +23,75 @@ void checkOnButton(){
       isPressingOnButton = NOT_PRESSING_BUTTON;
       systemStatus = !systemStatus;
       digitalWrite(STATUS_LED_PIN, (systemStatus ? HIGH : LOW)); //Change the status led
+      if(!systemStatus) {
+        turnSlavesOff();
+        lastTrafficLightUpdate = 0;
+      }
+        
+
     }
   }  
 }
 
+void failuredDetected() {
+  Serial.println("FAILURE DETECTED");
+  turnSlavesOff();
+  lastTrafficLightUpdate = 0;
+}
+
+void sendLightChangeToTrafficLight(int entry, int opNumber) {
+  char * buffer = malloc(FOUR_BYTES);
+  if(entry == 0) {
+    if(opNumber == GREEN_CMD)
+      turnMyselfGreen();
+    else
+      turnMyselfRed();
+  } else {
+    sendMessage(prevEntry, opNumber, buffer); //Send OFF command through WIRE
+    if(!verifyAck(buffer, prevEntry)) { //Make sure the response was ACK
+      failureDetected();
+    }
+  }
+  free(buffer);
+}
+
+void turnGreen(int entry) {
+  
+  if(lastTrafficLightUpdate == 0) {
+    //First we turn all red except the first one.
+    for(int i = 1; i < 4; i++) {
+      if(slavesAvailable[i] == SLAVE_ACTIVE) {
+        sendLightChangeToTrafficLight(i, RED_CMD);
+      }
+    }
+    //Turn the first traffic light green
+    sendLightChangeToTrafficLight(0, GREEN_CMD);
+  } else {
+    //Normal operation
+    int prevEntry = (entry > 0 ? (entry-1) % 4 : 3); //First we turn red the previous traffic light
+    sendLightChangeToTrafficLight(prevEntry, RED_CMD);
+
+    //Now we turn green the new entry
+    sendLightChangeToTrafficLight(entry, GREEN_CMD);
+
+  }
+}
+
+void orchestrate() {
+  //TODO check pedestrian button
+  long current = millis();
+  if(lastTrafficLightUpdate == 0) { //First time
+    turnGreen(0); //Start with first entry
+    lastTrafficLightUpdate = current;
+  } else if(current - lastTrafficLightUpdate > timeIntervalForNextEntry) {
+    currentEntry = (currentEntry+1) % 4;
+    turnGreen(currentEntry);    
+    lastTrafficLightUpdate = current;
+  }
+}
+
 void handlePotentiometer(){
-  long potentiometerStatus = analogRead(POTENTIOMETER_PIN);
+  unsigned int potentiometerStatus = analogRead(POTENTIOMETER_PIN);
   timeIntervalForNextEntry = 2000 + potentiometerStatus * 13000 / 1024 ;
   Serial.println(timeIntervalForNextEntry);
 }

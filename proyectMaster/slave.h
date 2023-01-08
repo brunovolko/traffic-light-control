@@ -19,6 +19,8 @@ void turnLightsOff();
 void blink();
 void messageReceivedHandler();
 void requestReceivedHandler();
+void turnMyselfRed();
+void turnMyselfGreen();
 
 char blinking = BLINKING_ON;
 char status_light_incoming = NO_LIGHTS;
