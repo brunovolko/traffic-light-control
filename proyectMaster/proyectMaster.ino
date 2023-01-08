@@ -30,6 +30,7 @@ void setup() {
     detectSlaves(); //Since we dont know how many slaves are there, we send a PING to them to see if they are alive
     turnSlavesOff(); //Send OFF command to slaves
   } else {
+    Wire.begin(localAddress);
     Serial.print("I'm slave N");
     Serial.println(localAddress);
 

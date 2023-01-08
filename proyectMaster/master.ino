@@ -47,7 +47,7 @@ int sendMessage(char opNumber, char destination, char * response) { //communicat
     //TODO sendAndRecieveLocalMessage
   } else {
     Wire.beginTransmission(destination);
-    Wire.write(toSend);  
+    Wire.write(toSend, 4);
     Wire.endTransmission();
 
     char bytes_to_expect = (opNumber == PING_CMD ? FIVE_BYTES : FOUR_BYTES);
