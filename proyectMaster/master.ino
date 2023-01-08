@@ -34,8 +34,9 @@ void handlePotentiometer(){
 }
 
 
-int sendMessage(char opNumber, char destination, char * response) { //communicate with light and recieve the answer from it\
-  //TODO ver mas adelante si el response es necesario o no
+int sendMessage(char opNumber, char destination, char * response) {
+  if(systemStatus)
+    digitalWrite(STATUS_LED_PIN, LOW);
   char sender = 0;
   char integrity = sender + opNumber + destination;
 
@@ -58,6 +59,8 @@ int sendMessage(char opNumber, char destination, char * response) { //communicat
       char c = Wire.read();
       response[bytes_read++] = c;
     }
+    if(systemStatus)
+      digitalWrite(STATUS_LED_PIN, HIGH);
     return bytes_read;
   }
 }
