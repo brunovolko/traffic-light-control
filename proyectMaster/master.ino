@@ -20,6 +20,7 @@ void checkOnButton(){
     OnButtonlastDebounceTime = millis();
   } else if(onButtonState == LOW && isPressingOnButton) {
     if(millis() - OnButtonlastDebounceTime > debounceDelay) {
+      Serial.println("Changing system status");
       isPressingOnButton = NOT_PRESSING_BUTTON;
       systemStatus = !systemStatus;
       digitalWrite(STATUS_LED_PIN, (systemStatus ? HIGH : LOW)); //Change the status led
@@ -72,8 +73,19 @@ void turnGreen(int entry) {
     sendLightChangeToTrafficLight(0, GREEN_CMD);
   } else {
     //Normal operation
-    int prevEntry = (entry > 0 ? (entry-1) % 4 : 3); //First we turn red the previous traffic light
+    int prevEntry = entry;
+    while(true) {
+      prevEntry = (prevEntry > 0 ? (prevEntry-1) % 4 : 3); //First we turn red the previous traffic light
+      if(slavesAvailable[prevEntry] == SLAVE_ACTIVE)
+        break;
+    }
+    Serial.print("Turning red the previous light ");
+    Serial.println(prevEntry);
+    
     sendLightChangeToTrafficLight(prevEntry, RED_CMD);
+
+    Serial.print("Now turning green the new entry ");
+    Serial.println(entry);
 
     //Now we turn green the new entry
     sendLightChangeToTrafficLight(entry, GREEN_CMD);
@@ -87,11 +99,19 @@ void orchestrate() {
   if(lastTrafficLightUpdate == 0) { //First time
     turnGreen(0); //Start with first entry
     lastTrafficLightUpdate = current;
-  }/* else if(current - lastTrafficLightUpdate > timeIntervalForNextEntry) {
-    currentEntry = (currentEntry+1) % 4;
-    turnGreen(currentEntry);    
+  } else if(current - lastTrafficLightUpdate > timeIntervalForNextEntry) {
+    Serial.print("Next entry ");
+    while(true) {
+      currentEntry = (currentEntry+1) % 4;
+      if(slavesAvailable[currentEntry] == SLAVE_ACTIVE)
+        break;
+    }
+    Serial.println(currentEntry);
+    
+    turnGreen(currentEntry);
+    Serial.println("after green");
     lastTrafficLightUpdate = current;
-  }*/
+  }
 }
 
 void handlePotentiometer(){
@@ -101,9 +121,6 @@ void handlePotentiometer(){
 
 
 int sendMessage(char opNumber, char destination, char * response) {
-  Serial.println("mandando");
-  Serial.println(int(opNumber));
-  Serial.println(int(destination));
   if(systemStatus)
     digitalWrite(STATUS_LED_PIN, LOW);
   char sender = 0;
