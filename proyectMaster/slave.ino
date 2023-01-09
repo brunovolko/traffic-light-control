@@ -53,17 +53,17 @@ void turnMyselfRed() {
   }
 }
 void turnMyselfGreen() {
-  if(status_light_incoming == NO_LIGHTS) {
+  if(status_light_inside == NO_LIGHTS) {
     turnLightsOff(); //First time
-    //Incoming traffict light
-    digitalWrite(INCOMING_GREEN_PIN, HIGH);
-    status_light_incoming = GREEN_LIGHT;
     //Interior traffic light
     digitalWrite(INTERIOR_RED_PIN, HIGH);
     status_light_inside = RED_LIGHT;
     //Pedestrian traffic light
     digitalWrite(PEDESTRIAN_GREEN_PIN, LOW);
     status_light_pedestrian = RED_LIGHT;
+    //Incoming traffict light
+    digitalWrite(INCOMING_GREEN_PIN, HIGH);
+    status_light_incoming = GREEN_LIGHT;    
   } else {
     //Incoming traffic light
     digitalWrite(INCOMING_RED_PIN, LOW);
@@ -109,6 +109,7 @@ void handleOperation(int opNumber) {
   //TODO in case we receive a red or green command but we are in blinking mode, disable blinking and turn lights off
   switch(opNumber) {
     case RED_CMD:
+      Serial.println("Receive red signal");
       initiateTrafficLightIfNeeded();
       turnMyselfRed();
       break;
@@ -124,6 +125,7 @@ void handleOperation(int opNumber) {
 }
 
 void messageReceivedHandler() {
+  Serial.println("message received");
   int sender, opNumber, destination, integrity;
   while(4 <= Wire.available()) {
     // Each command has 4 bytes
@@ -131,6 +133,7 @@ void messageReceivedHandler() {
     opNumber = Wire.read();
     destination = Wire.read();
     integrity = Wire.read();
+    Serial.println(opNumber);
     if(integrity == (sender + opNumber + destination)) {
       request_received = opNumber;
       handleOperation(request_received);

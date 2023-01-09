@@ -25,13 +25,13 @@ void checkOnButton(){
       digitalWrite(STATUS_LED_PIN, (systemStatus ? HIGH : LOW)); //Change the status led
       if(!systemStatus) {
         turnSlavesOff();
-        status_light_incoming = NO_LIGHTS;
-        status_light_inside = NO_LIGHTS;
-        status_light_pedestrian = NO_LIGHTS;
         lastTrafficLightUpdate = 0;
       } else {
         blinking = BLINKING_OFF;
       }
+      status_light_incoming = NO_LIGHTS;
+      status_light_inside = NO_LIGHTS;
+      status_light_pedestrian = NO_LIGHTS;
         
 
     }
@@ -52,7 +52,7 @@ void sendLightChangeToTrafficLight(int entry, int opNumber) {
     else
       turnMyselfRed();
   } else {
-    int bytes_read = sendMessage(entry, opNumber, buffer); //Send OFF command through WIRE
+    int bytes_read = sendMessage(opNumber, entry, buffer); //Send OFF command through WIRE
     if(bytes_read == -1)
         failureDetected();
   }
@@ -87,11 +87,11 @@ void orchestrate() {
   if(lastTrafficLightUpdate == 0) { //First time
     turnGreen(0); //Start with first entry
     lastTrafficLightUpdate = current;
-  } else if(current - lastTrafficLightUpdate > timeIntervalForNextEntry) {
+  }/* else if(current - lastTrafficLightUpdate > timeIntervalForNextEntry) {
     currentEntry = (currentEntry+1) % 4;
     turnGreen(currentEntry);    
     lastTrafficLightUpdate = current;
-  }
+  }*/
 }
 
 void handlePotentiometer(){
@@ -101,6 +101,9 @@ void handlePotentiometer(){
 
 
 int sendMessage(char opNumber, char destination, char * response) {
+  Serial.println("mandando");
+  Serial.println(int(opNumber));
+  Serial.println(int(destination));
   if(systemStatus)
     digitalWrite(STATUS_LED_PIN, LOW);
   char sender = 0;
@@ -110,31 +113,28 @@ int sendMessage(char opNumber, char destination, char * response) {
   if (!sprintf(toSend, "%c%c%c%c",sender, opNumber, destination, integrity)) {
     Serial.println("BROKEN SPRINTF");
   }
-  if(destination == localAddress) {
-    //TODO sendAndRecieveLocalMessage
-  } else {
-    Wire.beginTransmission(destination);
-    Wire.write(toSend, 4);
-    Wire.endTransmission();
+  
+  Wire.beginTransmission(destination);
+  Wire.write(toSend, 4);
+  Wire.endTransmission();
 
-    char bytes_to_expect = (opNumber == PING_CMD ? FIVE_BYTES : FOUR_BYTES);
-    int bytes_read = 0;
-    
-    Wire.requestFrom(destination, bytes_to_expect);
-    while(Wire.available()){
-      char c = Wire.read();
-      response[bytes_read++] = c;
-    }
-    if(systemStatus)
-      digitalWrite(STATUS_LED_PIN, HIGH);
-    if(bytes_to_expect == FOUR_BYTES) {
-      if(!verifyAck(response,destination)) {
-        Serial.println("ACK FAILURE");
-        bytes_read = -1; //Failure
-      }
-    }
-    return bytes_read;
+  char bytes_to_expect = (opNumber == PING_CMD ? FIVE_BYTES : FOUR_BYTES);
+  int bytes_read = 0;
+  
+  Wire.requestFrom(destination, bytes_to_expect);
+  while(Wire.available()){
+    char c = Wire.read();
+    response[bytes_read++] = c;
   }
+  if(systemStatus)
+    digitalWrite(STATUS_LED_PIN, HIGH);
+  if(bytes_to_expect == FOUR_BYTES) {
+    if(!verifyAck(response,destination)) {
+      Serial.println("ACK FAILURE");
+      bytes_read = -1; //Failure
+    }
+  }
+  return bytes_read;
 }
 
 bool verifyAck(char * response, int address) {
@@ -148,7 +148,7 @@ void turnSlavesOff() {
   char * buffer = malloc(FOUR_BYTES);  
   for(int i = 1; i < 4; i++) {
     if(slavesAvailable[i] == SLAVE_ACTIVE) {
-      int bytes_read = sendMessage(i, OFF_CMD, buffer); //Send OFF command through WIRE
+      int bytes_read = sendMessage(OFF_CMD, i, buffer); //Send OFF command through WIRE
       if(bytes_read == -1)
         failureDetected();
     }
