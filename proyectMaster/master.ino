@@ -33,7 +33,7 @@ void checkOnButton(){
   }  
 }
 
-void failuredDetected() {
+void failureDetected() {
   Serial.println("FAILURE DETECTED");
   turnSlavesOff();
   lastTrafficLightUpdate = 0;
@@ -47,8 +47,8 @@ void sendLightChangeToTrafficLight(int entry, int opNumber) {
     else
       turnMyselfRed();
   } else {
-    sendMessage(prevEntry, opNumber, buffer); //Send OFF command through WIRE
-    if(!verifyAck(buffer, prevEntry)) { //Make sure the response was ACK
+    sendMessage(entry, opNumber, buffer); //Send OFF command through WIRE
+    if(!verifyAck(buffer, entry)) { //Make sure the response was ACK
       failureDetected();
     }
   }

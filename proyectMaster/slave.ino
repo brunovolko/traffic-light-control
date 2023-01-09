@@ -43,11 +43,11 @@ void turnMyselfRed() {
     status_light_pedestrian = GREEN_LIGHT;
 
     //Turn inside traffic light also green
-    digitalWrite(PEDESTRIAN_RED_PIN, LOW);
-    digitalWrite(PEDESTRIAN_YELLOW_PIN, HIGH);
+    digitalWrite(INTERIOR_RED_PIN, LOW);
+    digitalWrite(INTERIOR_YELLOW_PIN, HIGH);
     delay(DELAY_YELLOW_BLINK); //Yellow for 0.5 secs
-    digitalWrite(PEDESTRIAN_YELLOW_PIN, LOW);
-    digitalWrite(PEDESTRIAN_GREEN_PIN, HIGH);
+    digitalWrite(INTERIOR_YELLOW_PIN, LOW);
+    digitalWrite(INTERIOR_GREEN_PIN, HIGH);
     status_light_inside = GREEN_LIGHT;
 
   }
@@ -78,11 +78,11 @@ void turnMyselfGreen() {
     status_light_pedestrian = RED_LIGHT;
 
     //Turn inside traffic light also red
-    digitalWrite(PEDESTRIAN_GREEN_PIN, LOW);
-    digitalWrite(PEDESTRIAN_YELLOW_PIN, HIGH);
+    digitalWrite(INTERIOR_GREEN_PIN, LOW);
+    digitalWrite(INTERIOR_YELLOW_PIN, HIGH);
     delay(DELAY_YELLOW_BLINK); //Yellow for 0.5 secs
-    digitalWrite(PEDESTRIAN_YELLOW_PIN, LOW);
-    digitalWrite(PEDESTRIAN_RED_PIN, HIGH);
+    digitalWrite(INTERIOR_YELLOW_PIN, LOW);
+    digitalWrite(INTERIOR_RED_PIN, HIGH);
     status_light_inside = RED_LIGHT;
 
   }

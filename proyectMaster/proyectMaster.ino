@@ -55,17 +55,10 @@ void loop() {
       handlePotentiometer(); //Read potentiometer to adjust the time of the traffic lights
       orchestrate();
       //TODO 3rd check pedestrian button
-      //TODO orchestrate lights
       //TODO detect faults
-      //TODO turn on or off the status led
       //TODO show patterns in status led
       //TODO handle pedestrian button time changes
       
-
-      //for(int i = 0; i < slaves; i++) {
-        //char opNumber = 0;//TODO get the actual operation number
-        //sendMessage(opNumber, i+1);
-      //}
     }
     
   }
