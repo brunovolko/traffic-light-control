@@ -21,6 +21,7 @@ void messageReceivedHandler();
 void requestReceivedHandler();
 void turnMyselfRed();
 void turnMyselfGreen();
+void checkPedestrianButton();
 
 char blinking = BLINKING_ON;
 char status_light_incoming = NO_LIGHTS;

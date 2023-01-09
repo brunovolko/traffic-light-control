@@ -14,7 +14,7 @@
 int slavesAvailable[4];
 int currentEntry = 0; //Stores the current entry with green light to enter
 long lastTrafficLightUpdate = 0; //
-
+bool remainingTimeHalved = false;
 void checkOnButton();
 int sendMessage(char opNumber, char destination);
 void handlePotentiometer();
@@ -22,5 +22,6 @@ void setupMaster();
 void detectSlaves();
 void orchestrate();
 void turnSlavesOff();
+void askIfPedestrianButtonIsPressed();
 
 #endif
