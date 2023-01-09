@@ -131,7 +131,7 @@ void messageReceivedHandler() {
     opNumber = Wire.read();
     destination = Wire.read();
     integrity = Wire.read();
-    if(integrity = (sender + opNumber + destination)) {
+    if(integrity == (sender + opNumber + destination)) {
       request_received = opNumber;
       handleOperation(request_received);
     } else {

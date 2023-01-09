@@ -47,10 +47,9 @@ void sendLightChangeToTrafficLight(int entry, int opNumber) {
     else
       turnMyselfRed();
   } else {
-    sendMessage(entry, opNumber, buffer); //Send OFF command through WIRE
-    if(!verifyAck(buffer, entry)) { //Make sure the response was ACK
-      failureDetected();
-    }
+    int bytes_read = sendMessage(entry, opNumber, buffer); //Send OFF command through WIRE
+    if(bytes_read == -1)
+        failureDetected();
   }
   free(buffer);
 }
@@ -93,7 +92,6 @@ void orchestrate() {
 void handlePotentiometer(){
   unsigned int potentiometerStatus = analogRead(POTENTIOMETER_PIN);
   timeIntervalForNextEntry = 2000 + potentiometerStatus * 13000 / 1024 ;
-  Serial.println(timeIntervalForNextEntry);
 }
 
 
@@ -124,6 +122,12 @@ int sendMessage(char opNumber, char destination, char * response) {
     }
     if(systemStatus)
       digitalWrite(STATUS_LED_PIN, HIGH);
+    if(bytes_to_expect == FOUR_BYTES) {
+      if(!verifyAck(response,destination)) {
+        Serial.println("ACK FAILURE");
+        bytes_read = -1; //Failure
+      }
+    }
     return bytes_read;
   }
 }
@@ -139,9 +143,9 @@ void turnSlavesOff() {
   char * buffer = malloc(FOUR_BYTES);  
   for(int i = 1; i < 4; i++) {
     if(slavesAvailable[i] == SLAVE_ACTIVE) {
-      sendMessage(i, OFF_CMD, buffer); //Send OFF command through WIRE
-      if(!verifyAck(buffer, i)) //Make sure the response was ACK
-        Serial.println("ACK FAILED"); // TODO handle failure
+      int bytes_read = sendMessage(i, OFF_CMD, buffer); //Send OFF command through WIRE
+      if(bytes_read == -1)
+        failureDetected();
     }
   }
   free(buffer);
