@@ -7,10 +7,11 @@
 
 
 
-int localAddress; //My identifier. From 0 to 3.
+int localAddress; //My own identifier. From 0 to 3.
 char isPressingOnButton = NOT_PRESSING_BUTTON;
-bool blink_status_led;
-long last_status_led_blink = 0;
+bool blink_status_led; //Used to know if loop should make the status led blink
+long last_status_led_blink = 0; //Used to avoid delay function when blinking status led
+long lastTimeAskedPedestrianButtonStatus = 0; //To avoid asking for the pedestratian button status so often.
 
 
 
@@ -22,8 +23,7 @@ void setup() {
   setupSlave();
 
   
-  delay(TIME_DELAY_TO_CHECK_ADDRESS);
-  getAddress();
+  getAddress(); //It identifies my own address based on the wires position
   if(localAddress == 0) {
     Wire.begin();
     Serial.println("I am the orchestrator");
@@ -51,33 +51,38 @@ void getAddress(){
 
 void loop() {
   if (localAddress == 0) {
-    checkOnButton(); //1st check for on button
-    if(blinking == BLINKING_OFF) {
-      handlePotentiometer(); //Read potentiometer to adjust the time of the traffic lights
-      //TODO 3rd check pedestrian button
-      //TODO detect faults
-      //TODO show patterns in status led
-      //TODO handle pedestrian button time changes
-      if(blink_status_led) {
+    checkOnButton(); //1st check status of the on/off button
+    if(blinking == BLINKING_OFF) { //It means the system is ON
+      if(!remainingTimeHalved) //Nobody has pressed the pedestrian button yet
+        handlePotentiometer(); //Read potentiometer to adjust the time of the traffic lights
+      
+      if(blink_status_led) { //It makes the status led blink when it has to
         if(millis() - last_status_led_blink > TIME_BLINK_STATUS_LED) {
           digitalWrite(STATUS_LED_PIN, HIGH);
           blink_status_led = 0;
         }
       }
 
-      orchestrate();
+      orchestrate(); //It sends orchestration commands when its time
+      if(!remainingTimeHalved && (millis() - lastTimeAskedPedestrianButtonStatus > 1000)) { //Every 1 second
+        askIfPedestrianButtonIsPressed();
+        lastTimeAskedPedestrianButtonStatus = millis();
+      }
+      
     }
     
   } else {
     if(request_received != NOTHING) {
       Serial.println(request_received);
-      handleOperation(request_received);
+      handleOperation(request_received); //Execute the operation received through message
     }
     request_received = NOTHING;
-  }
+  } 
 
 
   if(blinking == BLINKING_ON) {
     blink();
+  } else {
+    checkPedestrianButton(); //The slaves checks if someone is pressing the button
   }
 }

@@ -2,6 +2,8 @@
 #include "constants.h"
 
 long lastBlinkChange = 0, currentTime;
+char isPressingPedestrianButton = NOT_PRESSING_BUTTON;
+unsigned long PedestrianButtonlastDebounceTime = 0;
 
 void setupSlave() {
   pinMode(INTERIOR_RED_PIN, OUTPUT);
@@ -15,6 +17,21 @@ void setupSlave() {
 
   pinMode(ADDRESS_PIN_0, INPUT);
   pinMode(ADDRESS_PIN_1, INPUT);
+}
+
+void checkPedestrianButton() { //Verifies the pin of the pedestrian button
+  int pedestrianButtonState = digitalRead(PEDESTRIAN_BUTTON_PIN);
+  if(pedestrianButtonState == HIGH && !isPressingPedestrianButton) {
+    isPressingPedestrianButton = PRESSING_BUTTON;
+    PedestrianButtonlastDebounceTime = millis();
+  } else if(pedestrianButtonState == LOW && isPressingPedestrianButton) {
+    if(millis() - PedestrianButtonlastDebounceTime > debounceDelay) {
+      isPressingPedestrianButton = NOT_PRESSING_BUTTON;
+      if(status_light_pedestrian == RED_LIGHT) { //Only when pedestrians are waiting
+        pedestrian_button_pressed = PRESSING_BUTTON;
+      }
+    }
+  }
 }
 
 void turnMyselfRed() {
@@ -65,15 +82,6 @@ void turnMyselfGreen() {
     digitalWrite(INCOMING_GREEN_PIN, HIGH);
     status_light_incoming = GREEN_LIGHT;    
   } else {
-    //Incoming traffic light
-    digitalWrite(INCOMING_RED_PIN, LOW);
-    digitalWrite(INCOMING_YELLOW_PIN, HIGH);
-    delay(DELAY_YELLOW_BLINK); //Yellow for 0.5 secs
-
-    digitalWrite(INCOMING_YELLOW_PIN, LOW);
-    digitalWrite(INCOMING_GREEN_PIN, HIGH);
-    status_light_incoming = GREEN_LIGHT;
-
     //Turn pedestrian light red 
     digitalWrite(PEDESTRIAN_GREEN_PIN, LOW);
     status_light_pedestrian = RED_LIGHT;
@@ -86,6 +94,18 @@ void turnMyselfGreen() {
     digitalWrite(INTERIOR_RED_PIN, HIGH);
     status_light_inside = RED_LIGHT;
 
+    //Incoming traffic light
+    digitalWrite(INCOMING_RED_PIN, LOW);
+    digitalWrite(INCOMING_YELLOW_PIN, HIGH);
+    delay(DELAY_YELLOW_BLINK); //Yellow for 0.5 secs
+    digitalWrite(INCOMING_YELLOW_PIN, LOW);
+    digitalWrite(INCOMING_GREEN_PIN, HIGH);
+    status_light_incoming = GREEN_LIGHT;
+
+    
+
+    
+
   }
 }
 
@@ -97,9 +117,13 @@ void turnLightsOff() {
   digitalWrite(INCOMING_YELLOW_PIN, LOW);
   digitalWrite(INCOMING_GREEN_PIN, LOW);
   digitalWrite(PEDESTRIAN_GREEN_PIN, LOW);
+  status_light_incoming = NO_LIGHTS;
+  status_light_inside = NO_LIGHTS;
+  status_light_pedestrian = NO_LIGHTS;
 }
 
 void initiateTrafficLightIfNeeded() {
+  //The first time a RED or GREEN commands is received
   if(blinking) {
     blinking = BLINKING_OFF;
     turnLightsOff();
@@ -107,24 +131,27 @@ void initiateTrafficLightIfNeeded() {
 }
 
 void handleOperation(int opNumber) {
+  pedestrian_button_pressed = NOT_PRESSING_BUTTON;
   switch(opNumber) {
     case RED_CMD:
       initiateTrafficLightIfNeeded();
       turnMyselfRed();
+      request_received = NOTHING;
       break;
     case GREEN_CMD:
       initiateTrafficLightIfNeeded();
       turnMyselfGreen();
+      request_received = NOTHING;
       break;
     case OFF_CMD:
       turnLightsOff();
       blinking = BLINKING_ON;
+      request_received = NOTHING;
       break;
   }
 }
 
 void messageReceivedHandler() {
-  //Serial.println("message received");
   int sender, opNumber, destination, integrity;
   while(4 <= Wire.available()) {
     // Each command has 4 bytes
@@ -132,9 +159,10 @@ void messageReceivedHandler() {
     opNumber = Wire.read();
     destination = Wire.read();
     integrity = Wire.read();
-    //Serial.println(opNumber);
     if(integrity == (sender + opNumber + destination)) {
       request_received = opNumber;
+      Serial.print("Op received: ");
+      Serial.println(opNumber);
     } else {
       Serial.println("Integrity mismatch when receiving a message.");
     }
@@ -143,7 +171,9 @@ void messageReceivedHandler() {
 }
 
 void requestReceivedHandler() {
+  //The orchestratos asks for an answer after a command
   if(request_received == PING_CMD) {
+    Serial.println("Answering to PING");
     char response [FIVE_BYTES];
     unsigned char information = 0; //0 means no failures.
     //We cant check if a light is failing because we send digitalWrite commands but we dont get an answer
@@ -153,7 +183,8 @@ void requestReceivedHandler() {
       Serial.println("BROKEN SPRINTF");
     } else {
       Wire.write(response, FIVE_BYTES);
-    }     
+    }
+    request_received = NOTHING;
   } else if(request_received != NOTHING) {
     char response [FOUR_BYTES];
     if (!sprintf(response, "%c%c%c%c", localAddress, ACK, 0, ACK+localAddress)) { //0 is orchestrator
@@ -162,7 +193,6 @@ void requestReceivedHandler() {
       Wire.write(response, FOUR_BYTES);
     }
   }
-  request_received = NOTHING;
 }
 
 void blink() {
@@ -174,6 +204,7 @@ void blink() {
       lastBlinkChange = currentTime; //Reset time
       //Interior traffic light
       status_light_inside = (status_light_inside == NO_LIGHTS ? YELLOW_LIGHT : NO_LIGHTS);
+      Serial.println(int(status_light_inside));
       digitalWrite(INTERIOR_YELLOW_PIN, status_light_inside == YELLOW_LIGHT ? HIGH : LOW); //Send signal to led
       //Incoming traffic light
       status_light_incoming = (status_light_incoming == NO_LIGHTS ? YELLOW_LIGHT : NO_LIGHTS);
