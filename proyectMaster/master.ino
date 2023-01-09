@@ -25,7 +25,12 @@ void checkOnButton(){
       digitalWrite(STATUS_LED_PIN, (systemStatus ? HIGH : LOW)); //Change the status led
       if(!systemStatus) {
         turnSlavesOff();
+        status_light_incoming = NO_LIGHTS;
+        status_light_inside = NO_LIGHTS;
+        status_light_pedestrian = NO_LIGHTS;
         lastTrafficLightUpdate = 0;
+      } else {
+        blinking = BLINKING_OFF;
       }
         
 
