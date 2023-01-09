@@ -7,9 +7,10 @@
 
 
 
-char systemStatus = SystemOFF; //The system initializes off
 int localAddress; //My identifier. From 0 to 3.
 char isPressingOnButton = NOT_PRESSING_BUTTON;
+bool blink_status_led;
+long last_status_led_blink = 0;
 
 
 
@@ -26,7 +27,7 @@ void setup() {
   if(localAddress == 0) {
     Wire.begin();
     Serial.println("I am the orchestrator");
-    digitalWrite(STATUS_LED_PIN, (systemStatus ? HIGH : LOW)); //Make sure the led starts with the initial status
+    digitalWrite(STATUS_LED_PIN, (blinking ? LOW : HIGH)); //Make sure the led starts with the initial status
     detectSlaves(); //Since we dont know how many slaves are there, we send a PING to them to see if they are alive
     turnSlavesOff(); //Send OFF command to slaves
   } else {
@@ -51,19 +52,30 @@ void getAddress(){
 void loop() {
   if (localAddress == 0) {
     checkOnButton(); //1st check for on button
-    if(systemStatus == SystemON) {
+    if(blinking == BLINKING_OFF) {
       handlePotentiometer(); //Read potentiometer to adjust the time of the traffic lights
-      orchestrate();
       //TODO 3rd check pedestrian button
       //TODO detect faults
       //TODO show patterns in status led
       //TODO handle pedestrian button time changes
-      
+      if(blink_status_led) {
+        if(millis() - last_status_led_blink > TIME_BLINK_STATUS_LED) {
+          digitalWrite(STATUS_LED_PIN, HIGH);
+          blink_status_led = 0;
+        }
+      }
+
+      orchestrate();
     }
     
+  } else {
+    if(request_received != NOTHING) {
+      Serial.println(request_received);
+      handleOperation(request_received);
+    }
+    request_received = NOTHING;
   }
 
-  //TODO handle commands received as a slave
 
   if(blinking == BLINKING_ON) {
     blink();

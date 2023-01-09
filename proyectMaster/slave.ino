@@ -69,6 +69,7 @@ void turnMyselfGreen() {
     digitalWrite(INCOMING_RED_PIN, LOW);
     digitalWrite(INCOMING_YELLOW_PIN, HIGH);
     delay(DELAY_YELLOW_BLINK); //Yellow for 0.5 secs
+
     digitalWrite(INCOMING_YELLOW_PIN, LOW);
     digitalWrite(INCOMING_GREEN_PIN, HIGH);
     status_light_incoming = GREEN_LIGHT;
@@ -106,15 +107,13 @@ void initiateTrafficLightIfNeeded() {
 }
 
 void handleOperation(int opNumber) {
-  //TODO in case we receive a red or green command but we are in blinking mode, disable blinking and turn lights off
   switch(opNumber) {
     case RED_CMD:
-      Serial.println("Receive red signal");
       initiateTrafficLightIfNeeded();
       turnMyselfRed();
       break;
     case GREEN_CMD:
-    initiateTrafficLightIfNeeded();
+      initiateTrafficLightIfNeeded();
       turnMyselfGreen();
       break;
     case OFF_CMD:
@@ -125,7 +124,7 @@ void handleOperation(int opNumber) {
 }
 
 void messageReceivedHandler() {
-  Serial.println("message received");
+  //Serial.println("message received");
   int sender, opNumber, destination, integrity;
   while(4 <= Wire.available()) {
     // Each command has 4 bytes
@@ -133,10 +132,9 @@ void messageReceivedHandler() {
     opNumber = Wire.read();
     destination = Wire.read();
     integrity = Wire.read();
-    Serial.println(opNumber);
+    //Serial.println(opNumber);
     if(integrity == (sender + opNumber + destination)) {
       request_received = opNumber;
-      handleOperation(request_received);
     } else {
       Serial.println("Integrity mismatch when receiving a message.");
     }
