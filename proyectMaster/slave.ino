@@ -152,6 +152,7 @@ void handleOperation(int opNumber) {
 }
 
 void messageReceivedHandler() {
+  lastTimeMessageWasReceived = millis();
   int sender, opNumber, destination, integrity;
   while(4 <= Wire.available()) {
     // Each command has 4 bytes

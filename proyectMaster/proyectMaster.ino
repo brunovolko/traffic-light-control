@@ -12,7 +12,7 @@ char isPressingOnButton = NOT_PRESSING_BUTTON;
 bool blink_status_led; //Used to know if loop should make the status led blink
 long last_status_led_blink = 0; //Used to avoid delay function when blinking status led
 long lastTimeAskedPedestrianButtonStatus = 0; //To avoid asking for the pedestratian button status so often.
-
+long lastTimeMessageWasReceived = 0; //For fault tolerance
 
 
 
@@ -31,6 +31,7 @@ void setup() {
     detectSlaves(); //Since we dont know how many slaves are there, we send a PING to them to see if they are alive
     turnSlavesOff(); //Send OFF command to slaves
   } else {
+    lastTimeMessageWasReceived = millis();
     Wire.begin(localAddress);
     Serial.print("I'm slave N");
     Serial.println(localAddress);
@@ -77,6 +78,12 @@ void loop() {
       handleOperation(request_received); //Execute the operation received through message
     }
     request_received = NOTHING;
+    if(!blinking && (millis()-lastTimeMessageWasReceived > 10000)) {
+      Serial.println("No message received after a minute");
+      turnLightsOff();
+      blinking = BLINKING_ON;
+
+    }
   } 
 
 
